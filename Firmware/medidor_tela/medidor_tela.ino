@@ -1,3 +1,8 @@
+
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+
+
 // DEFINICION DE PINES
 
 #define ENVIAR 7      // BOTON PARA ENVIAR LA INFO AL PC
@@ -11,7 +16,6 @@
 
 //
 
-#include <Wire.h>
 
 
 void setup() {
