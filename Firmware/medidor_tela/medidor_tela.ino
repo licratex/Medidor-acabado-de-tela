@@ -47,7 +47,7 @@ void loop() {
 }
 
 void ancho(){
-  
+        
   }
 
 void largo(){
