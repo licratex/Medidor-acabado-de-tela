@@ -49,18 +49,46 @@ void setup() {
 
 void loop() {
   digitalWrite(ledPin, state);
-  interrupcion();
-  zero();
-
-  if (millis() % 250 == 0) {
-    gramaje = (peso * 1000) / (ancho * largo);
-    rendimiento = largo / peso;
-    pantalla();
-  }
+  interrupcion();             // lleva el conteo del encoder para calcular los metros de largo
+  zero();                     // boton de zero o tara, para calibrar a zero el peso al encender la máquina o si se descalibra.
+  pantalla();                 // cada 250 ms se refresca la pantalla del LCD con la info nueva
   teclado();
 }
 
+void pantalla() {
+
+  if (millis() % 250 == 0) {
+    gramaje = (peso * 1000) / (ancho * largo);
+    rendimiento = largo / peso;  
+    lcd.setCursor(0, 0);
+    lcd.print("MTS :");
+    lcd.print(largo);
+    lcd.setCursor(0, 1);
+    lcd.print("PESO:");
+    lcd.print(peso);
+    lcd.setCursor(0, 2);
+    lcd.print("ANCH:");
+    lcd.print(ancho);
+    lcd.setCursor(11, 4);
+    lcd.print("ROLL:");
+    lcd.print(rollo);
+
+    lcd.setCursor(11, 0);
+    lcd.print("GRAM:");
+    lcd.print(gramaje);
+    lcd.setCursor(11, 1);
+    lcd.print("REND:");
+    lcd.print(rendimiento);
+    lcd.setCursor(11, 2);
+    lcd.print("HUME:");
+    lcd.print(humedad);
+  }
+}
 void teclado() {
+  // enviamos aquí toda la info por teclado, esto solo ocurre cuando el usuario presiona el botón de enviar,
+  // sobreentendiendo que ya temrinó de salir el rollo y que el cursor está en la primera celda donde se desea
+  // escribir la info, cuando ya se envía la info al pc, se coloca en zero nuevamente el valor del cuentametros
+  // para estar preparados para el proximo rollo de tela.
   if (!digitalRead(enviar)) {
     Keyboard.print(rollo);  //        // TAB
     Keyboard.write(0xB3);  //        // TAB
@@ -75,10 +103,9 @@ void teclado() {
     Keyboard.print(gramaje);  //        // TAB
     Keyboard.write(0xB0);  //        // TAB
     largo = 0;
-   // peso = 0;
     rollo++;
     lcd.clear();
-    while(!digitalRead(enviar)){
+    while (!digitalRead(enviar)) {
       delay(100);
     }
     delay(100);
@@ -86,30 +113,7 @@ void teclado() {
 }
 
 
-void pantalla() {
-  lcd.setCursor(0, 0);
-  lcd.print("MTS :");
-  lcd.print(largo);
-  lcd.setCursor(0, 1);
-  lcd.print("PESO:");
-  lcd.print(peso);
-  lcd.setCursor(0, 2);
-  lcd.print("ANCH:");
-  lcd.print(ancho);
-  lcd.setCursor(11, 4);
-  lcd.print("ROLL:");
-  lcd.print(rollo);
 
-  lcd.setCursor(11, 0);
-  lcd.print("GRAM:");
-  lcd.print(gramaje);
-  lcd.setCursor(11, 1);
-  lcd.print("REND:");
-  lcd.print(rendimiento);
-  lcd.setCursor(11, 2);
-  lcd.print("HUME:");
-  lcd.print(humedad);
-}
 
 void zero() { // funcion que lleva todas las variables a zero, sirve para calibrar la balanza y el odometro a zero
   if (!digitalRead(zeroPin)) {
