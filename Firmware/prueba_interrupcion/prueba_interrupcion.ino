@@ -1,3 +1,5 @@
+#include <HX711.h>
+
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 
@@ -14,6 +16,8 @@ const byte ledPin       = 13;   // pin de led solo para monitorear
 const byte interruptPin = 7;    // pin al que esta conectada la interrupcion
 const byte zeroPin      = 5;    // boton setear a cero la longiud y el peso
 const byte enviar       = 8;    // boton para enviar
+const byte pot_ancho    = 4;     // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte pot_peso     = 6;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
 
 volatile byte state = LOW;      // para el led de la board
 unsigned long time1, time2;     // variables para guardar tiempo de ejecucion y eliminar lecuras falsas
@@ -26,7 +30,7 @@ int gramaje = 0;                // en gramos x m2
 int humedad = 0;                 // en %
 int rollo = 1;
 float rendimiento = 0;          // en metros / kg
-
+int tipo=1;                     // variable para que el usuario seleccione el tipo de tela
 
 void setup() {
   lcd.begin(20, 4);
@@ -51,8 +55,40 @@ void loop() {
   digitalWrite(ledPin, state);
   interrupcion();             // lleva el conteo del encoder para calcular los metros de largo
   zero();                     // boton de zero o tara, para calibrar a zero el peso al encender la máquina o si se descalibra.
+  tela();
+  wide();
+  weight();
   pantalla();                 // cada 250 ms se refresca la pantalla del LCD con la info nueva
-  teclado();
+  teclado();                  // envía por teclado la información, SOLO ENVÍA BAJO REQUEST
+}
+
+void wide(){
+  ancho=analogRead(pot_ancho); // lee el valor del potenciometro
+  ancho=map(ancho, 1, 1023, 1.19, 2.20);
+}
+
+void weight(){
+  peso=analogRead(pot_peso); // lee el valor del potenciometro
+  peso=map(peso  , 1, 1023, 5, 30);
+}
+
+void tela(){
+  // Al presionar el boton de tipo de tela se cambia en la pantalla y en el valor enviado el tipo de tela
+  // 1 Jersey
+  // 2 PIQUE
+  // 3 RIB
+  // 4 SABINA
+  // 5 MicroFibraLycrada
+  // 6 Interlock
+  // 7 Microfibra
+  // 8 Cotton Lycra
+  // 9 PolyCottonLycra
+  if(!digitalRead(enviar)){
+    tipo++;
+    if(tipo>10){
+      tipo=1;
+    }
+  }
 }
 
 void pantalla() {
@@ -69,7 +105,7 @@ void pantalla() {
     lcd.setCursor(0, 2);
     lcd.print("ANCH:");
     lcd.print(ancho);
-    lcd.setCursor(11, 4);
+    lcd.setCursor(11, 3);
     lcd.print("ROLL:");
     lcd.print(rollo);
 
@@ -82,6 +118,36 @@ void pantalla() {
     lcd.setCursor(11, 2);
     lcd.print("HUME:");
     lcd.print(humedad);
+    lcd.setCursor(11, 3);
+    switch(tipo){
+      case 1:
+      lcd.print("Jersey");
+      break;
+      case 2:
+      lcd.print("Pique");
+      break;
+      case 3:
+      lcd.print("Rib");
+      break;
+      case 4:
+      lcd.print("Sabina");
+      break;
+      case 5:
+      lcd.print("MicrofLyc");
+      break;
+      case 6:
+      lcd.print("Interlock");
+      break;
+      case 7:
+      lcd.print("Microfibr");
+      break;
+      case 8:
+      lcd.print("AlgLycra");
+      break;
+      case 9:
+      lcd.print("PolyAlgLy");
+      break;
+    }
   }
 }
 void teclado() {
@@ -106,14 +172,11 @@ void teclado() {
     rollo++;
     lcd.clear();
     while (!digitalRead(enviar)) {
-      delay(100);
+      delay(500);
     }
-    delay(100);
+    delay(500);
   }
 }
-
-
-
 
 void zero() { // funcion que lleva todas las variables a zero, sirve para calibrar la balanza y el odometro a zero
   if (!digitalRead(zeroPin)) {
@@ -121,8 +184,13 @@ void zero() { // funcion que lleva todas las variables a zero, sirve para calibr
     peso = 0;
     rollo++;
     lcd.clear();
+    int c=0;        //variable para determinar si el boton de zero se dejo presionado mas de 5 segundos, con lo gual se pone en zero tambien la cantidad de rollos.
     while (!digitalRead(zeroPin)) {
+      c++;
       delay(100);
+    }
+    if(c>50){
+      rollo=0;
     }
     delay(1000);
   }
