@@ -63,7 +63,7 @@ void loop() {
 }
 
 void wide(){
-  ancho=analogRead(pot_ancho); // lee el valor del potenciometro
+  ancho=analogRead(pot_ancho); // lee el valor del potenciometrom
   ancho=map(ancho, 1, 1023, 1.19, 2.20);
 }
 
@@ -85,9 +85,12 @@ void tela(){
   // 9 PolyCottonLycra
   if(!digitalRead(enviar)){
     tipo++;
-    if(tipo>10){
+    if(tipo>9){
       tipo=1;
     }
+  while(!digitalRead(enviar)){
+    delay(300);
+  }
   }
 }
 
@@ -133,19 +136,19 @@ void pantalla() {
       lcd.print("Sabina");
       break;
       case 5:
-      lcd.print("MicrofLyc");
+      lcd.print("MicrofLy");
       break;
       case 6:
-      lcd.print("Interlock");
+      lcd.print("Interloc");
       break;
       case 7:
-      lcd.print("Microfibr");
+      lcd.print("Microfib");
       break;
       case 8:
-      lcd.print("AlgLycra");
+      lcd.print("AlgLycr");
       break;
       case 9:
-      lcd.print("PolyAlgLy");
+      lcd.print("PolAlLy");
       break;
     }
   }
@@ -167,7 +170,37 @@ void teclado() {
     Keyboard.print(rendimiento);  //        // TAB
     Keyboard.write(0xB3);  //        // TAB
     Keyboard.print(gramaje);  //        // TAB
-    Keyboard.write(0xB0);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+     switch(tipo){
+      case 1:
+      Keyboard.print("Jersey");
+      break;
+      case 2:
+      Keyboard.print("Pique");
+      break;
+      case 3:
+      Keyboard.print("Rib");
+      break;
+      case 4:
+      Keyboard.print("Sabina");
+      break;
+      case 5:
+      Keyboard.print("Microfibra Lycrada");
+      break;
+      case 6:
+      Keyboard.print("Interlock");
+      break;
+      case 7:
+      Keyboard.print("Microfibra");
+      break;
+      case 8:
+      Keyboard.print("Algodon Lycra");
+      break;
+      case 9:
+      Keyboard.print("Polyester Algodon Lycra");
+      break;
+    }
+    Keyboard.write(0xB3);  //        // TAB
     largo = 0;
     rollo++;
     lcd.clear();
