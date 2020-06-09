@@ -16,12 +16,13 @@ const byte ledPin       = 13;   // pin de led solo para monitorear
 const byte interruptPin = 7;    // pin al que esta conectada la interrupcion
 const byte zeroPin      = 5;    // boton setear a cero la longiud y el peso
 const byte enviar       = 8;    // boton para enviar
-const byte pot_ancho    = 4;     // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
-const byte pot_peso     = 6;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte pot_ancho    = 18;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte pot_peso     = 19;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte boton_tela   = 20;    // Boton para selección de tela
 
-volatile byte state = LOW;      // para el led de la board
-unsigned long time1, time2;     // variables para guardar tiempo de ejecucion y eliminar lecuras falsas
-bool p = false, f = true;       // bandeas para controlar y eliminar lecturas falsas
+volatile byte state = LOW;        // para el led de la board
+unsigned long time1, time2;       // variables para guardar tiempo de ejecucion y eliminar lecuras falsas
+bool p = false, f = true;         // bandeas para controlar y eliminar lecturas falsas
 const float largo_radio = 0.03125; // perimetro entre un radio y otro
 float largo = 20;                // variable global para acumular el largo en metros
 float peso = 6.42;                 // variable global para acumular el peso en kg
@@ -83,12 +84,12 @@ void tela(){
   // 7 Microfibra
   // 8 Cotton Lycra
   // 9 PolyCottonLycra
-  if(!digitalRead(enviar)){
+  if(!digitalRead(boton_tela)){
     tipo++;
     if(tipo>9){
       tipo=1;
     }
-  while(!digitalRead(enviar)){
+  while(!digitalRead(boton_tela)){
     delay(300);
   }
   }
