@@ -1,5 +1,3 @@
-#include <HX711.h>
-
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 
@@ -23,20 +21,20 @@ const byte boton_tela   = 20;    // Boton para selección de tela
 volatile byte state = LOW;        // para el led de la board
 unsigned long time1, time2;       // variables para guardar tiempo de ejecucion y eliminar lecuras falsas
 bool p = false, f = true;         // bandeas para controlar y eliminar lecturas falsas
-const float largo_radio = 0.03125; // perimetro entre un radio y otro
-float largo = 20;                // variable global para acumular el largo en metros
-float peso = 6.42;                 // variable global para acumular el peso en kg
-float ancho = 1.60;                // en metros
-int gramaje = 0;                // en gramos x m2
+const float largo_radio = 0.0625; // perimetro entre un radio y otro
+float largo = 0;                // variable global para acumular el largo en metros
+float peso = 0;                 // variable global para acumular el peso en kg
+float ancho = 0;                // en metros
+int gramaje = 0;                // en gramos x m2+
 int humedad = 0;                 // en %
-int rollo = 1;
+int rollo = 0;
 float rendimiento = 0;          // en metros / kg
 int tipo = 1;                   // variable para que el usuario seleccione el tipo de tela
 
 void setup() {
   lcd.begin(20, 4);
   lcd.setCursor(6, 0);
-  lcd.print("LICRATEX");
+  lcd.print("LICRATX");
   lcd.setCursor(8, 1);
   lcd.print("****");
   lcd.setCursor(2, 2);
@@ -47,7 +45,7 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   pinMode(zeroPin, INPUT_PULLUP);                                           // activar pullup interno para el boton de tare/zero
   pinMode(interruptPin, INPUT_PULLUP);                                      // activar pullup interno de la interrupcion
-  attachInterrupt(digitalPinToInterrupt(interruptPin), blink, FALLING);     // definir pin de interrupcion, nombre de la interrupcion, trigger de la interrupccion
+  attachInterrupt(digitalPinToInterrupt(interruptPin), blink, LOW);     // definir pin de interrupcion, nombre de la interrupcion, trigger de la interrupccion
   delay(2000);
   lcd.begin(20, 4);
 }
@@ -249,7 +247,7 @@ void interrupcion() {
     largo += largo_radio;
   }
   time2 = millis();            // las lineas siguiente controlan el tiempo que ocaciona rebote o lecturas en falso.
-  if (time2 - time1 > 100) {
+  if (time2 - time1 > 10) {
     f = true;
   }
 }

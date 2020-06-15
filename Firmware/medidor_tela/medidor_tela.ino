@@ -1,75 +1,171 @@
+#include <LCD.h>
 #include <LiquidCrystal_I2C.h>
+
+#include <Keyboard.h>
 #include <Wire.h>
 
-// Constructor de la librería de LCD 16x2
-// Aqui se configuran los pines asignados a la pantalla del PCF8574
-// Este constructor es para usar con el modulo I2C que se muestra en las
-// fotografias de nuestro sitio web. Para otros modelos, puede ser necesario
-// cambiar los valores de acuerdo al esquemático del adaptador I2C. Los pines
-// del arduino SIEMPRE son los correspondientes al I2C (SDA y SCL)
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
 
-// Constructor sin control de backlight (retroiluminacion)
-//LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
-// Constructor con control de backlignt (retroiluminacion)
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-// DEFINICION DE PINES
+// INTERRUPCION PARA ENCODER FUNCINANDO CON CONTROL DE RUIDO EN LECTURA
 
-#define ANCHO_INC 8      // BOTON PARA ENVIAR LA INFO AL PC
-#define ANCHO_DEC 9      // BOTON PARA ENVIAR LA INFO AL PC
-#define ENVIAR 7          // BOTON PARA ENVIAR LA INFO AL PC
-#define TESTIGO 5     // BOTON PARA CALIBRAR CON UN PESO DE CONTROL
-#define ZERO 4        // BOTON PARA PONER EN CERO EL MEDIDOR
-const byte HERRADURA = 7; // AQUI VA CONECTADO EL SENSOR DE HERRADURA
+// PINS
+const byte ledPin       = 13;   // pin de led solo para monitorear
+const byte interruptPin = 7;    // pin al que esta conectada la interrupcion
+const byte zeroPin      = 5;    // boton setear a cero la longiud y el peso
+const byte enviar       = 8;    // boton para enviar
+const byte pot_ancho    = 21;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte pot_peso     = 19;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
+const byte boton_tela   = 20;    // Boton para selección de tela
+float largo_radio  = 0.0623666343;
 
-//  VARIABLES GLOBALES
-bool p=false;
-bool p2=true;
-int largo_radio= (3.1416*2*10)/4; // 10 es el radio de la rueda y 4 son los radios que tiene
-int largo_rollo=0;
-
+volatile byte state = LOW;        // para el led de la board
+bool p = false, f = true;         // bandeas para controlar y eliminar lecturas falsas
+float largo = 0;                // variable global para acumular el largo en metros
+float peso = 0;                 // variable global para acumular el peso en kg
+float ancho = 0;                // en metros
+int gramaje = 0;                // en gramos x m2+
+int humedad = 0;                 // en %
+int rollo = 0;
+float rendimiento = 0;          // en metros / kg
+int tipo = 1;                   // variable para que el usuario seleccione el tipo de tela
+int pasos = 0;
+int estado = 1;
 void setup() {
-  lcd.begin(16, 24);     // INDICO AL ARDUINO LAS DIMENSIONES DEL LCD
-  lcd.clear();          // LIMPIO PANTALLA Y VOY AL PUNTO 0,0
-  lcd.print(" LICRATEX ");
-  pinMode(ENVIAR,INPUT);
-  pinMode(TESTIGO, INPUT);
-  pinMode(ZERO, INPUT);
-  pinMode(HERRADURA, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(HERRADURA), paso, FALLING);  
-  delay(1000);
+  lcd.begin(20, 4);
+  lcd.setCursor(6, 0);
+  lcd.print("LICRATeX");
+  lcd.setCursor(8, 1);
+  lcd.print("****");
+  lcd.setCursor(2, 2);
+  lcd.print("Metricas Abierta");
+  lcd.setCursor(8, 3);
+  lcd.print("****");
+  pinMode(enviar, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  pinMode(zeroPin, INPUT_PULLUP);                                           // activar pullup interno para el boton de tare/zero
+  pinMode(interruptPin, INPUT_PULLUP);                                      // activar pullup interno de la interrupcion
+  attachInterrupt(digitalPinToInterrupt(interruptPin), blink, FALLING);     // definir pin de interrupcion, nombre de la interrupcion, trigger de la interrupccion
+  delay(500);
+  lcd.begin(20, 4);
 }
 
 void loop() {
- largo();
- ancho();
- pantalla();
-}
-
-void ancho(){
-        
-  }
-
-void largo(){
-  if(p){  // si se detecto un radio incrementar
-  largo_rollo+=largo_radio;
-  p=false;    
-  }
+  interrupcion();
+  zero();                     // boton de zero o tara, para calibrar a zero el peso al encender la máquina o si se descalibra.
+  //  tela();
+  wide();
+  weight();
+  pantalla();                 // cada 250 ms se refresca la pantalla del LCD con la info nueva
+  //  teclado();                  // envía por teclado la información, SOLO ENVÍA BAJO REQUES
 }
 
 
-
-void pantalla(){
-  lcd.clear();
-  lcd.print(largo_rollo);         // aquí iran las variables
-  lcd.setCursor ( 6, 0 );
-  lcd.print("ANCHO");     
-  lcd.setCursor ( 0, 1 );  
-  lcd.print("PESO");     
-  lcd.setCursor ( 6, 1 );    
-  lcd.print("GRAMAJE");  
+void wide() {
+  ancho = analogRead(pot_ancho); // lee el valor del potenciometrom
+  ancho = map(ancho, 1, 1023, 2000, 1190);
+  ancho = ancho / 1000;
 }
 
-void paso(){ // interrupcion cada vez que se interrupme el sensor de herradura
-  p=true;    
+void weight() {
+  peso = analogRead(pot_peso); // lee el valor del potenciometro
+  peso = map(peso  , 1, 1023, 2500, 1500);
+  peso = peso / 100;
+}
+
+void pantalla() {
+
+  if (millis() % 250 == 0) {
+    gramaje = (peso * 1000) / (ancho * largo);
+    if (gramaje < 100 || gramaje > 500) {
+     gramaje = 0;
+    }
+    rendimiento = largo / peso;
+    lcd.setCursor(0, 0);
+    lcd.print("MTS :");
+    lcd.print(largo);
+    lcd.setCursor(0, 1);
+    lcd.print("PESO:");
+    lcd.print(peso);
+    lcd.setCursor(0, 2);
+    lcd.print("ANCH:");
+    lcd.print(ancho);
+    lcd.setCursor(11, 3);
+    lcd.print("ROLL:");
+    lcd.print(rollo);
+
+    lcd.setCursor(11, 0);
+    lcd.print("GRAM:");
+    lcd.print(gramaje);
+    lcd.setCursor(11, 1);
+    lcd.print("REND:");
+    lcd.print(rendimiento);
+    lcd.setCursor(11, 2);
+    lcd.print("HUME:");
+    lcd.print(humedad);
+    lcd.setCursor(0, 3);
+    switch (tipo) {
+      case 1:
+        lcd.print("Jersey    ");
+        break;
+      case 2:
+        lcd.print("Pique     ");
+        break;
+      case 3:
+        lcd.print("Rib       ");
+        break;
+      case 4:
+        lcd.print("Sabina   ");
+        break;
+      case 5:
+        lcd.print("MicrofLyc");
+        break;
+      case 6:
+        lcd.print("Interlock");
+        break;
+      case 7:
+        lcd.print("Microfibr");
+        break;
+      case 8:
+        lcd.print("AlgLycra ");
+        break;
+      case 9:
+        lcd.print("PolyAlgLyc");
+        break;
+    }
   }
+}
+
+void zero() { // funcion que lleva todas las variables a zero, sirve para calibrar la balanza y el odometro a zero
+  unsigned long time1;
+  if (!digitalRead(zeroPin)) {
+    time1 = millis();
+    largo = 0;
+    peso = 0;
+    rollo++;
+    pasos = 0;
+    int c = 0;      //variable para determinar si el boton de zero se dejo presionado mas de 5 segundos, con lo gual se pone en zero tambien la cantidad de rollos.
+    while (!digitalRead(zeroPin)) {
+      if (millis - time1 > 2000)
+        rollo = 0;
+    }
+    lcd.clear();
+  }
+}
+
+
+void interrupcion() {
+  if (p) {
+    p = false;
+    largo += largo_radio;
+    pasos++;
+    f = true;
+  }
+}
+
+void blink() {
+  if (f) {
+    f = false;
+    p = true;
+  }
+}
