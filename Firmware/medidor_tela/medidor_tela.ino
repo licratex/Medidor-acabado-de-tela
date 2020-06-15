@@ -26,7 +26,7 @@ float peso = 0;                 // variable global para acumular el peso en kg
 float ancho = 0;                // en metros
 int gramaje = 0;                // en gramos x m2+
 int humedad = 0;                 // en %
-int rollo = 0;
+int rollo = 1;
 float rendimiento = 0;          // en metros / kg
 int tipo = 1;                   // variable para que el usuario seleccione el tipo de tela
 int pasos = 0;
@@ -46,7 +46,7 @@ void setup() {
   pinMode(zeroPin, INPUT_PULLUP);                                           // activar pullup interno para el boton de tare/zero
   pinMode(interruptPin, INPUT_PULLUP);                                      // activar pullup interno de la interrupcion
   attachInterrupt(digitalPinToInterrupt(interruptPin), blink, FALLING);     // definir pin de interrupcion, nombre de la interrupcion, trigger de la interrupccion
-  delay(500);
+  delay(2000);
   lcd.begin(20, 4);
 }
 
@@ -61,13 +61,13 @@ void loop() {
 }
 
 void teclado() {
-  unsigned long time1=millis();
+  unsigned long time1 = millis();
   // enviamos aquí toda la info por teclado, esto solo ocurre cuando el usuario presiona el botón de enviar,
   // sobreentendiendo que ya temrinó de salir el rollo y que el cursor está en la primera celda donde se desea
   // escribir la info, cuando ya se envía la info al pc, se coloca en zero nuevamente el valor del cuentametros
   // para estar preparados para el proximo rollo de tela.
   if (!digitalRead(enviar)) {
- 
+
     Keyboard.print(rollo);  //        // TAB
     Keyboard.write(0xB3);  //        // TAB
     Keyboard.print(peso);  //        // TAB
@@ -113,14 +113,14 @@ void teclado() {
     largo = 0;
     rollo++;
     lcd.clear();
-    while (!digitalRead(enviar) || millis()-time1 <1000) {
+    while (!digitalRead(enviar) || millis() - time1 < 1000) {
     }
   }
 }
 
 void wide() {
   ancho = analogRead(pot_ancho); // lee el valor del potenciometrom
-  ancho = map(ancho, 1, 1023, 2000, 1190);
+  ancho = map(ancho, 1, 1023, 1900, 1500);
   ancho = ancho / 1000;
 }
 
@@ -135,7 +135,7 @@ void pantalla() {
   if (millis() % 250 == 0) {
     gramaje = (peso * 1000) / (ancho * largo);
     if (gramaje < 100 || gramaje > 500) {
-     gramaje = 0;
+      gramaje = 0;
     }
     rendimiento = largo / peso;
     lcd.setCursor(0, 0);
@@ -196,17 +196,23 @@ void pantalla() {
 void zero() { // funcion que lleva todas las variables a zero, sirve para calibrar la balanza y el odometro a zero
   unsigned long time1;
   if (!digitalRead(zeroPin)) {
+    lcd.clear();
     time1 = millis();
     largo = 0;
     peso = 0;
-    rollo++;
     pasos = 0;
-    int c = 0;      //variable para determinar si el boton de zero se dejo presionado mas de 5 segundos, con lo gual se pone en zero tambien la cantidad de rollos.
     while (!digitalRead(zeroPin)) {
-      if (millis - time1 > 2000)
-        rollo = 0;
+      lcd.setCursor(6, 2);
+      lcd.print("BORRANDO...");
+      if (millis() - time1 > 5000) {
+        lcd.clear();
+        rollo = 1;
+        lcd.setCursor(0, 2);
+        lcd.print("BORRADO FINALIZADO");
+      }
     }
     lcd.clear();
+
   }
 }
 
@@ -221,23 +227,23 @@ void tela() {
   // 7 Microfibra
   // 8 Cotton Lycra
   // 9 PolyCottonLycra
-    unsigned long time1=millis();
-    if(analogRead(boton_tela)<500){
-      tipo++;
-      if(tipo>9){
-        tipo=1;
-      }
-    while(millis-time1<200){
-    bool b;
+  unsigned long time1 = millis();
+  if (analogRead(boton_tela) < 500) {
+    tipo++;
+    if (tipo > 9) {
+      tipo = 1;
     }
-    time1=millis();
-    while(analogRead(boton_tela)==0|| millis()-time1<200){
-    bool b;
+    while (millis - time1 < 200) {
+      bool b;
     }
-    while(millis-time1<200){
-    bool b;
+    time1 = millis();
+    while (analogRead(boton_tela) == 0 || millis() - time1 < 200) {
+      bool b;
     }
+    while (millis - time1 < 200) {
+      bool b;
     }
+  }
 }
 
 void interrupcion() {
