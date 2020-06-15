@@ -53,13 +53,70 @@ void setup() {
 void loop() {
   interrupcion();
   zero();                     // boton de zero o tara, para calibrar a zero el peso al encender la máquina o si se descalibra.
-  //  tela();
+  tela();
   wide();
   weight();
   pantalla();                 // cada 250 ms se refresca la pantalla del LCD con la info nueva
-  //  teclado();                  // envía por teclado la información, SOLO ENVÍA BAJO REQUES
+  teclado();                  // envía por teclado la información, SOLO ENVÍA BAJO REQUES
 }
 
+void teclado() {
+  unsigned long time1=millis();
+  // enviamos aquí toda la info por teclado, esto solo ocurre cuando el usuario presiona el botón de enviar,
+  // sobreentendiendo que ya temrinó de salir el rollo y que el cursor está en la primera celda donde se desea
+  // escribir la info, cuando ya se envía la info al pc, se coloca en zero nuevamente el valor del cuentametros
+  // para estar preparados para el proximo rollo de tela.
+  if (!digitalRead(enviar)) {
+ 
+    Keyboard.print(rollo);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    Keyboard.print(peso);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    Keyboard.print(ancho);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    Keyboard.print(largo);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    Keyboard.print(rendimiento);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    Keyboard.print(gramaje);  //        // TAB
+    Keyboard.write(0xB3);  //        // TAB
+    switch (tipo) {
+      case 1:
+        Keyboard.print("Jersey");
+        break;
+      case 2:
+        Keyboard.print("Pique");
+        break;
+      case 3:
+        Keyboard.print("Rib");
+        break;
+      case 4:
+        Keyboard.print("Sabina");
+        break;
+      case 5:
+        Keyboard.print("Microfibra Lycrada");
+        break;
+      case 6:
+        Keyboard.print("Interlock");
+        break;
+      case 7:
+        Keyboard.print("Microfibra");
+        break;
+      case 8:
+        Keyboard.print("Algodon Lycra");
+        break;
+      case 9:
+        Keyboard.print("Polyester Algodon Lycra");
+        break;
+    }
+    Keyboard.write(0xB3);  //        // TAB
+    largo = 0;
+    rollo++;
+    lcd.clear();
+    while (!digitalRead(enviar) || millis()-time1 <1000) {
+    }
+  }
+}
 
 void wide() {
   ancho = analogRead(pot_ancho); // lee el valor del potenciometrom
@@ -153,6 +210,35 @@ void zero() { // funcion que lleva todas las variables a zero, sirve para calibr
   }
 }
 
+void tela() {
+  // Al presionar el boton de tipo de tela se cambia en la pantalla y en el valor enviado el tipo de tela
+  // 1 Jersey
+  // 2 PIQUE
+  // 3 RIB
+  // 4 SABINA
+  // 5 MicroFibraLycrada
+  // 6 Interlock
+  // 7 Microfibra
+  // 8 Cotton Lycra
+  // 9 PolyCottonLycra
+    unsigned long time1=millis();
+    if(analogRead(boton_tela)<500){
+      tipo++;
+      if(tipo>9){
+        tipo=1;
+      }
+    while(millis-time1<200){
+    bool b;
+    }
+    time1=millis();
+    while(analogRead(boton_tela)==0|| millis()-time1<200){
+    bool b;
+    }
+    while(millis-time1<200){
+    bool b;
+    }
+    }
+}
 
 void interrupcion() {
   if (p) {
