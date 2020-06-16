@@ -66,6 +66,7 @@ void pantalla() {
       lcd.print(c);
       break;
   }
+  lcd.print("   ");
  }
 
 void seleccion() {
