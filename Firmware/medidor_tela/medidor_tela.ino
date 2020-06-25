@@ -126,7 +126,7 @@ void wide() {
 
 void weight() {
   peso = analogRead(pot_peso); // lee el valor del potenciometro
-  peso = map(peso  , 1, 1023, 2500, 1500);
+  peso = map(peso  , 1, 1023, 1000, 3000);
   peso = peso / 100;
 }
 
