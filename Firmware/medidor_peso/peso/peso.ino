@@ -1,27 +1,62 @@
 #include <Q2HX711.h>
 
+#include <Q2HX711.h>
 
-// HX711 circuit wiring
-const int LOADCELL_DOUT_PIN = 2;
-const int LOADCELL_SCK_PIN = 3;
+const byte hx711_data_pin = A5;
+const byte hx711_clock_pin = A0;
 
-HX711 scale(LOADCELL_DOUT_PIN , LOADCELL_SCK_PIN);
+Q2HX711 hx711(hx711_data_pin, hx711_clock_pin);
 
+float offset = 0, time1 = 0, peso = 0;
+float factor = 0.0444444 / 1000;
+int i = 0;
+int j = 0;
+float temp = 16777215.00;
 void setup() {
-  Serial.begin(57600);
-  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  Serial.begin(9600);
+//  zero();
 }
+
+
 
 void loop() {
-
-  if (scale.is_ready()) {
-    long reading = scale.read();
-    Serial.print("HX711 reading: ");
-    Serial.println(reading);
-  } else {
-    Serial.println("HX711 not found.");
+  peso = hx711.read();
+  if (peso < temp*.9 || peso > temp*1.1) {
+    Serial.print("Peso: ");
+    Serial.print(peso);
+    Serial.println(" ");
   }
-
-  delay(1000);
-  
 }
+
+
+//
+//void pesar() {
+//  i++;
+//  time1 = millis();
+//  peso += hx711.read();
+//  if (i > 20) {
+//    peso = abs(((peso / i) - offset))*factor;  
+//    i = 0;
+//    Serial.print("Peso: ");
+//    Serial.println(peso);
+//    peso = 0;
+//    j++;
+//  }
+//}
+//
+//void calibracion(){
+//}
+//
+//void zero() {
+//  for (i = 0; i < 10; i++) {
+//    offset += hx711.read();
+//    if (i % 2 == 0) {
+//      Serial.println("ZERO...");
+//    } else {
+//      Serial.println("ZERO");
+//    }
+//  }
+//  offset /= i;
+//  i = 0;
+//  Serial.println("ZERO: TERMINADO");
+//}
