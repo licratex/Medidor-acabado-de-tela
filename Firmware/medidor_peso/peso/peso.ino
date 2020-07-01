@@ -1,4 +1,3 @@
-#include <Q2HX711.h>
 
 #include <Q2HX711.h>
 
@@ -14,17 +13,18 @@ int j = 0;
 float temp = 16777215.00;
 void setup() {
   Serial.begin(9600);
-//  zero();
+  time1=millis();
 }
 
 
 
 void loop() {
   peso = hx711.read();
-  if (peso < temp*.9 || peso > temp*1.1) {
+  if (millis()-time1 > 500) {
     Serial.print("Peso: ");
     Serial.print(peso);
     Serial.println(" ");
+    time1=millis();
   }
 }
 
