@@ -19,8 +19,12 @@ const byte enviar       = 8;    // boton para enviar
 const byte pot_ancho    = 21;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
 const byte pot_peso     = 19;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
 const byte boton_tela   = 20;    // Boton para selección de tela
+const byte cambio_peso  = 4;    // Boton para selección de tela
+int tipo_peso = 2;
+
 float largo_radio  = 0.0623666343;
 
+int from = 1000, to = 25000;
 volatile byte state = LOW;        // para el led de la board
 bool p = false, f = true;         // bandeas para controlar y eliminar lecturas falsas
 float largo = 0;                // variable global para acumular el largo en metros
@@ -44,6 +48,7 @@ void setup() {
   lcd.setCursor(8, 3);
   lcd.print("****");
   pinMode(enviar, INPUT_PULLUP);
+  pinMode(cambio_peso, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT);
   pinMode(zeroPin, INPUT_PULLUP);                                           // activar pullup interno para el boton de tare/zero
   pinMode(interruptPin, INPUT_PULLUP);                                      // activar pullup interno de la interrupcion
@@ -127,8 +132,38 @@ void wide() {
 }
 
 void weight() {
+
   peso = analogRead(pot_peso); // lee el valor del potenciometro
-  peso = map(peso  , 1, 1023, 1000, 3000);
+
+  if (!digitalRead(cambio_peso)) {
+    tipo_peso++;
+    if (tipo_peso > 4) {
+      tipo_peso = 1;
+    }
+    while (!digitalRead(cambio_peso)) {
+          lcd.setCursor(18, 3);
+          lcd.print("X");
+      delay(1000);
+    }
+          lcd.setCursor(18, 3);
+          lcd.print(" ");
+  }
+
+  switch (tipo_peso) {
+    case 1:
+      peso = map(peso  , 0, 1100, 0, 1500);
+      break;
+    case 2:
+      peso = map(peso  , 0, 1100, 800, 2500);
+      break;
+    case 3:
+      peso = map(peso  , 0, 1023, 1800, 3500);
+      break;
+    case 4:
+      peso = map(peso  , 0, 1023, 2800, 4500);
+      break;
+  }
+
   peso = peso / 100;
 }
 
@@ -192,7 +227,10 @@ void pantalla() {
         lcd.print("PolyAlgLyc");
         break;
     }
+    lcd.setCursor(19, 3);
+    lcd.print(tipo_peso);
   }
+
 }
 
 void zero() { // funcion que lleva todas las variables a zero, sirve para calibrar la balanza y el odometro a zero
