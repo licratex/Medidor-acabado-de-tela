@@ -12,13 +12,12 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 // INTERRUPCION PARA ENCODER FUNCINANDO CON CONTROL DE RUIDO EN LECTURA
 
 // PINS
-const byte ledPin       = 13;   // pin de led solo para monitorear
 const byte interruptPin = 7;    // pin al que esta conectada la interrupcion
 const byte zeroPin      = 5;    // boton setear a cero la longiud y el peso
 const byte enviar       = 8;    // boton para enviar
 const byte pot_ancho    = 21;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
 const byte pot_peso     = 19;    // potenciometro para poner el ancho (esto se cambiará por 4 celdas de carga que llevarán el carrito)
-const byte boton_tela   = 20;    // Boton para selección de tela
+const byte boton_tela   = 6;    // Boton para selección de tela
 const byte cambio_peso  = 4;    // Boton para selección de tela
 int tipo_peso = 2;
 
@@ -49,7 +48,7 @@ void setup() {
   lcd.print("****");
   pinMode(enviar, INPUT_PULLUP);
   pinMode(cambio_peso, INPUT_PULLUP);
-  pinMode(ledPin, OUTPUT);
+  pinMode(boton_tela, INPUT_PULLUP);
   pinMode(zeroPin, INPUT_PULLUP);                                           // activar pullup interno para el boton de tare/zero
   pinMode(interruptPin, INPUT_PULLUP);                                      // activar pullup interno de la interrupcion
   attachInterrupt(digitalPinToInterrupt(interruptPin), blink, FALLING);     // definir pin de interrupcion, nombre de la interrupcion, trigger de la interrupccion
@@ -143,7 +142,7 @@ void weight() {
     while (!digitalRead(cambio_peso)) {
           lcd.setCursor(18, 3);
           lcd.print("X");
-      delay(1000);
+      delay(500);
     }
           lcd.setCursor(18, 3);
           lcd.print(" ");
@@ -268,7 +267,8 @@ void tela() {
   // 8 Cotton Lycra
   // 9 PolyCottonLycra
   unsigned long time1 = millis();
-  if (analogRead(boton_tela) < 500) {
+
+  if (!digitalRead(boton_tela)) {
     tipo++;
     if (tipo > 9) {
       tipo = 1;
@@ -277,7 +277,7 @@ void tela() {
       bool b;
     }
     time1 = millis();
-    while (analogRead(boton_tela) == 0 || millis() - time1 < 200) {
+    while (!digitalRead(boton_tela) || millis() - time1 < 200) {
       bool b;
     }
     while (millis - time1 < 200) {
